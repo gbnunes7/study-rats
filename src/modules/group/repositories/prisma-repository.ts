@@ -32,7 +32,7 @@ class GroupRepository implements IGroupContract {
       },
     });
 
-    return groups.length > 0 ? groups : null;
+    return groups.length > 0 ? groups : [];
   }
 
   async getGroupById(groupId: number): Promise<Prisma.GroupGetPayload<{ include: { Users_In_Group: true } }> | null> {
