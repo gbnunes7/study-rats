@@ -13,16 +13,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Subject {
+  JAVASCRIPT
+  PYTHON
+  JAVA
+  C_SHARP
+  RUBY
+  PHP
+  GO
+  HTML
+  CSS
+  PROGRAMMING_LOGIC
+  DATA_STRUCTURES
+  ALGORITHMS
+}
+
+enum Privacy {
+  PUBLIC
+  PRIVATE
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String  @unique
-  password_hash  String
-  reset_password_token String? @unique
+  id                     Int       @id @default(autoincrement())
+  name                   String
+  email                  String    @unique
+  subject_interests      Subject[]
+  description            String?
+  password_hash          String
+  reset_password_token   String?   @unique
   reset_password_expires DateTime?
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  Group          Group[]
+  Users_In_Group Users_In_Group[]
+
   @@map("users")
+}
+
+model Group {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  subject     Subject
+
+  user_limit Int     @default(5)
+  user_count Int     @default(0)
+  privacy    Privacy @default(PUBLIC)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user_id        Int
+  user           User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Users_In_Group Users_In_Group[]
+
+  @@map("groups")
+}
+
+model Users_In_Group {
+  id       Int @id @default(autoincrement())
+  user_id  Int
+  group_id Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@map("users_in_group")
 }
