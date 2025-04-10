@@ -45,7 +45,14 @@ export class GroupService {
   async enterInGroup(
     groupId: number,
     userId: number,
-  ): Promise<Either<GroupNotFoundError | GroupHasReachedTheLimitError, Group>> {
+  ): Promise<
+    Either<
+      | GroupNotFoundError
+      | GroupHasReachedTheLimitError
+      | UserAlreadyInGroupError,
+      Group
+    >
+  > {
     const groupFound = await this.groupRepository.getGroupById(groupId);
 
     if (!groupFound) {
