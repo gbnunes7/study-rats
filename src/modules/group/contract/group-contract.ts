@@ -11,4 +11,5 @@ export interface IGroupContract {
   getGroupsCreatedByUserId: (userId: number) => Promise<Group[] | null>;
   enterInGroup: (groupId: number, userId: number) => Promise<Group>;
   getGroupById: (groupId: number) => Promise<Prisma.GroupGetPayload<{ include: { Users_In_Group: true } }> | null>;
+  getPublicGroupsWithVacancies: () => Promise<Group[]>;
 }
