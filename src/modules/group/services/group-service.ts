@@ -7,6 +7,7 @@ import { UserHasReachedTheLimitError } from './errors/user-has-reached-the-limit
 import { GroupNotFoundError } from './errors/group-not-found-error';
 import { GroupHasReachedTheLimitError } from './errors/group-has-reached-the-limit-error';
 import { UserAlreadyInGroupError } from './errors/user-already-in-group-error';
+import { generateRandomCode } from '../utils/random-code';
 
 export class GroupService {
   constructor(private groupRepository: IGroupContract) {}
@@ -17,6 +18,7 @@ export class GroupService {
     description,
     privacy,
     userId,
+    entryCode,
   }: CreateGroupDto): Promise<
     Either<InvalidPrivacyTypeError | UserHasReachedTheLimitError, Group>
   > {
@@ -37,6 +39,7 @@ export class GroupService {
       description,
       privacy,
       userId,
+      entryCode: privacy === 'PRIVATE' ? generateRandomCode() : undefined,
     });
 
     return right(group);
