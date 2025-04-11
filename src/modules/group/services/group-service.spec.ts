@@ -228,4 +228,19 @@ describe('GroupService', () => {
       expect(groups!.length).toBe(0);
     }
   });
+
+  it('should an code if the group is private', async () => {
+    const result = await sut.createGroup({
+      name: 'Study Group',
+      subject: 'ALGORITHMS',
+      description: 'Group for math lovers',
+      privacy: 'PRIVATE',
+      userId: 1,
+    });
+
+    expect(result.isRight()).toBeTruthy();
+    if (result.isRight()) {
+      expect(result.value.entry_code).toBeDefined();
+    }
+  });
 });
