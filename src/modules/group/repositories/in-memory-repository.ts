@@ -29,8 +29,8 @@ export class InMemoryGroupRepository implements IGroupContract {
       description,
       privacy,
       user_id: userId,
-      user_count: 0, 
-      user_limit: 10, 
+      user_count: 0,
+      user_limit: 10,
       created_at: new Date(),
       updated_at: new Date(),
     } as Group;
@@ -65,9 +65,7 @@ export class InMemoryGroupRepository implements IGroupContract {
     return group;
   }
 
-  async getGroupById(
-    groupId: number,
-  ): Promise<
+  async getGroupById(groupId: number): Promise<
     | (Group & {
         Users_In_Group: {
           id: number;
@@ -85,11 +83,23 @@ export class InMemoryGroupRepository implements IGroupContract {
       return null;
     }
 
-    const usersInGroup = this.usersInGroup.filter((entry) => entry.group_id === groupId);
+    const usersInGroup = this.usersInGroup.filter(
+      (entry) => entry.group_id === groupId,
+    );
 
     return {
       ...group,
       Users_In_Group: usersInGroup,
     };
+  }
+
+  async getPublicGroupsWithVacancies(): Promise<Group[]> {
+    const groupsWithVacancies = this.groups.filter(
+      (group) =>
+        group.privacy === 'PUBLIC' &&
+        (group.user_count || 0) < (group.user_limit || 10),
+    );
+
+    return groupsWithVacancies;
   }
 }
