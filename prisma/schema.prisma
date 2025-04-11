@@ -57,6 +57,7 @@ model Group {
   name        String
   description String?
   subject     Subject
+  entry_code  String? @unique
 
   user_limit Int     @default(5)
   user_count Int     @default(0)

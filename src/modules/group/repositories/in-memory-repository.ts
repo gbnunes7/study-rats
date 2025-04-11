@@ -21,6 +21,7 @@ export class InMemoryGroupRepository implements IGroupContract {
     description,
     privacy,
     userId,
+    entryCode
   }: CreateGroupDto): Promise<Group> {
     const group = {
       id: this.groups.length + 1,
@@ -33,6 +34,7 @@ export class InMemoryGroupRepository implements IGroupContract {
       user_limit: 10,
       created_at: new Date(),
       updated_at: new Date(),
+      entry_code: privacy === 'PRIVATE' ? entryCode : undefined,
     } as Group;
 
     this.groups.push(group);

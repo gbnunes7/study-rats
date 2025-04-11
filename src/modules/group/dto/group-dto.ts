@@ -7,4 +7,5 @@ export type CreateGroupDto = {
 
   privacy?: Privacy;
   userId: number;
+  entryCode?: string;
 };
