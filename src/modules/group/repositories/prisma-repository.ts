@@ -11,6 +11,7 @@ class GroupRepository implements IGroupContract {
     description,
     privacy,
     userId,
+    entryCode
   }: CreateGroupDto): Promise<Group> {
     const group = await this.groupRepository.group.create({
       data: {
@@ -19,6 +20,7 @@ class GroupRepository implements IGroupContract {
         description,
         privacy,
         user_id: userId,
+        entry_code: entryCode,
       },
     });
 
