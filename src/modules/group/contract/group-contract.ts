@@ -7,6 +7,7 @@ export interface IGroupContract {
     subject,
     description,
     privacy,
+    entryCode,
   }: CreateGroupDto) => Promise<Group>;
   getGroupsCreatedByUserId: (userId: number) => Promise<Group[] | null>;
   enterInGroup: (groupId: number, userId: number) => Promise<Group>;
