@@ -63,12 +63,18 @@ export class GroupService {
       return left(new UserAlreadyInGroupError());
     }
 
-    if (groupFound.user_count > groupFound.user_limit) {
+    if (groupFound.user_count >= groupFound.user_limit) {
       return left(new GroupHasReachedTheLimitError());
     }
 
     const group = await this.groupRepository.enterInGroup(groupId, userId);
 
     return right(group);
+  }
+
+  async getPublicGroupsWithVacancies(): Promise<Either<null, Group[]>> {
+    const groups = await this.groupRepository.getPublicGroupsWithVacancies();
+
+    return right(groups.length > 0 ? groups : []);
   }
 }

@@ -3,6 +3,9 @@ import { GroupService } from './group-service';
 import { InvalidPrivacyTypeError } from './errors/invalid-privacy-type-error';
 import { UserHasReachedTheLimitError } from './errors/user-has-reached-the-limit-error';
 import { InMemoryGroupRepository } from '../repositories/in-memory-repository';
+import { GroupNotFoundError } from './errors/group-not-found-error';
+import { UserAlreadyInGroupError } from './errors/user-already-in-group-error';
+import { GroupHasReachedTheLimitError } from './errors/group-has-reached-the-limit-error';
 
 let groupRepository: InMemoryGroupRepository;
 let sut: GroupService;
@@ -69,6 +72,160 @@ describe('GroupService', () => {
     expect(result.isLeft()).toBeTruthy();
     if (result.isLeft()) {
       expect(result.value).toBeInstanceOf(UserHasReachedTheLimitError);
+    }
+  });
+  it('should be able to enter in a group', async () => {
+    const group = await groupRepository.createGroup({
+      name: 'Study Group',
+      subject: 'ALGORITHMS',
+      description: 'Description',
+      privacy: 'PUBLIC',
+      userId: 1,
+    });
+
+    const result = await sut.enterInGroup(group.id, 2);
+
+    expect(result.isRight()).toBeTruthy();
+    if (result.isRight()) {
+      expect(result.value.id).toBe(group.id);
+    }
+  });
+
+  it('should not be able to enter a non-existing group', async () => {
+    const result = await sut.enterInGroup(999, 1);
+
+    expect(result.isLeft()).toBeTruthy();
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(GroupNotFoundError);
+    }
+  });
+
+  it('should not allow a user to enter twice in the same group', async () => {
+    const group = await groupRepository.createGroup({
+      name: 'Study Group',
+      subject: 'ALGORITHMS',
+      description: 'Description',
+      privacy: 'PUBLIC',
+      userId: 1,
+    });
+
+    await sut.enterInGroup(group.id, 2);
+
+    const result = await sut.enterInGroup(group.id, 2);
+    expect(result.isLeft()).toBeTruthy();
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(UserAlreadyInGroupError);
+    }
+  });
+
+  it('should not allow user to enter a full group (user_count > user_limit)', async () => {
+    const group = await groupRepository.createGroup({
+      name: 'Small Group',
+      subject: 'ALGORITHMS',
+      description: 'Only 1 user allowed',
+      privacy: 'PUBLIC',
+      userId: 1,
+    });
+
+    const groupInRepo = groupRepository.groups.find((g) => g.id === group.id);
+
+    if (groupInRepo) {
+      groupInRepo.user_limit = 1;
+      groupInRepo.user_count = 1;
+    }
+
+    const result = await sut.enterInGroup(group.id, 3);
+
+    expect(result.isLeft()).toBeTruthy();
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(GroupHasReachedTheLimitError);
+    }
+  });
+
+  it('should increase user_count when a user enters the group', async () => {
+    const group = await groupRepository.createGroup({
+      name: 'Growing Group',
+      subject: 'ALGORITHMS',
+      description: 'Lots of people',
+      privacy: 'PUBLIC',
+      userId: 1,
+    });
+
+    await sut.enterInGroup(group.id, 2);
+
+    const updatedGroup = await groupRepository.getGroupById(group.id);
+
+    expect(updatedGroup?.user_count).toBe(1);
+  });
+
+  it('should return public groups with vacancies', async () => {
+    await groupRepository.createGroup({
+      name: 'Public Group 1',
+      subject: 'ALGORITHMS',
+      description: 'Description',
+      privacy: 'PUBLIC',
+      userId: 1,
+    });
+
+    await groupRepository.createGroup({
+      name: 'Private Group 2',
+      subject: 'ALGORITHMS',
+      description: 'Description',
+      privacy: 'PRIVATE',
+      userId: 2,
+    });
+
+    const result = await sut.getPublicGroupsWithVacancies();
+
+    expect(result.isRight()).toBeTruthy();
+    if (result.isRight()) {
+      expect(result.value.length).toBe(1);
+      expect(result.value[0].name).toBe('Public Group 1');
+    }
+  });
+
+  it('should return an empty array if there are no public groups with vacancies', async () => {
+    await groupRepository.createGroup({
+      name: 'Full Group',
+      subject: 'ALGORITHMS',
+      description: 'Description',
+      privacy: 'PUBLIC',
+      userId: 1,
+    });
+
+    const groupInRepo = groupRepository.groups.find(
+      (g) => g.name === 'Full Group',
+    );
+
+    if (groupInRepo) {
+      groupInRepo.user_limit = 1;
+      groupInRepo.user_count = 1;
+    }
+
+    const result = await sut.getPublicGroupsWithVacancies();
+
+    expect(result.isRight()).toBeTruthy();
+    if (result.isRight()) {
+      expect(result.value.length).toBe(0);
+    }
+  });
+
+  it('should return an empty array if there are no public groups', async () => {
+    await groupRepository.createGroup({
+      name: 'Full Group',
+      subject: 'ALGORITHMS',
+      description: 'Description',
+      privacy: 'PRIVATE',
+      userId: 1,
+    });
+
+    const result = await sut.getPublicGroupsWithVacancies();
+
+    const groups = result.value;
+
+    expect(result.isRight()).toBeTruthy();
+    if (result.isRight()) {
+      expect(groups!.length).toBe(0);
     }
   });
 });

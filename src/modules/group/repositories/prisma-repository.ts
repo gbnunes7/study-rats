@@ -35,7 +35,9 @@ class GroupRepository implements IGroupContract {
     return groups.length > 0 ? groups : [];
   }
 
-  async getGroupById(groupId: number): Promise<Prisma.GroupGetPayload<{ include: { Users_In_Group: true } }> | null> {
+  async getGroupById(groupId: number): Promise<Prisma.GroupGetPayload<{
+    include: { Users_In_Group: true };
+  }> | null> {
     const group = await this.groupRepository.group.findUnique({
       where: {
         id: groupId,
@@ -68,6 +70,16 @@ class GroupRepository implements IGroupContract {
 
       return group;
     });
+  }
+
+  async getPublicGroupsWithVacancies(): Promise<Group[]> {
+    const groups = await this.groupRepository.$queryRaw<Group[]>`
+    SELECT * FROM "Group"
+    WHERE privacy = 'PUBLIC'
+    AND user_count < user_limit
+  `;
+
+    return groups.length > 0 ? groups : [];
   }
 }
 
