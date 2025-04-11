@@ -29,8 +29,8 @@ export class InMemoryGroupRepository implements IGroupContract {
       description,
       privacy,
       user_id: userId,
-      user_count: 0, // Inicializa o contador
-      user_limit: 10, // Pode mudar conforme seu app
+      user_count: 0, 
+      user_limit: 10, 
       created_at: new Date(),
       updated_at: new Date(),
     } as Group;
@@ -51,11 +51,9 @@ export class InMemoryGroupRepository implements IGroupContract {
       throw new Error('Group not found');
     }
 
-    // Atualizar o contador de usuários no grupo
     group.user_count = (group.user_count || 0) + 1;
     group.updated_at = new Date();
 
-    // Simular inserção em Users_In_Group
     this.usersInGroup.push({
       id: this.usersInGroupCounter++,
       created_at: new Date(),
