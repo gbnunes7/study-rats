@@ -21,7 +21,7 @@ export class InMemoryGroupRepository implements IGroupContract {
     description,
     privacy,
     userId,
-    entryCode
+    entryCode,
   }: CreateGroupDto): Promise<Group> {
     const group = {
       id: this.groups.length + 1,
@@ -103,5 +103,13 @@ export class InMemoryGroupRepository implements IGroupContract {
     );
 
     return groupsWithVacancies;
+  }
+
+  async getPrivateGroupForEntryCode(entryCode: string): Promise<Group | null> {
+    const group = this.groups.find(
+      (group) => group.entry_code === entryCode && group.privacy === 'PRIVATE',
+    );
+
+    return group || null;
   }
 }

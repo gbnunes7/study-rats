@@ -1,6 +1,7 @@
 import type { Group, Prisma, PrismaClient } from '@prisma/client';
 import type { IGroupContract } from '../contract/group-contract';
 import type { CreateGroupDto } from '../dto/group-dto';
+import type { GroupPayload } from '../types/group-payload';
 
 class GroupRepository implements IGroupContract {
   constructor(private groupRepository: PrismaClient) {}
@@ -11,7 +12,7 @@ class GroupRepository implements IGroupContract {
     description,
     privacy,
     userId,
-    entryCode
+    entryCode,
   }: CreateGroupDto): Promise<Group> {
     const group = await this.groupRepository.group.create({
       data: {
@@ -37,9 +38,7 @@ class GroupRepository implements IGroupContract {
     return groups.length > 0 ? groups : [];
   }
 
-  async getGroupById(groupId: number): Promise<Prisma.GroupGetPayload<{
-    include: { Users_In_Group: true };
-  }> | null> {
+  async getGroupById(groupId: number): Promise<GroupPayload | null> {
     const group = await this.groupRepository.group.findUnique({
       where: {
         id: groupId,
@@ -82,6 +81,51 @@ class GroupRepository implements IGroupContract {
   `;
 
     return groups.length > 0 ? groups : [];
+  }
+
+  async getPrivateGroupForEntryCode(
+    entryCode: string,
+  ): Promise<GroupPayload | null> {
+    const group = await this.groupRepository.group.findFirst({
+      where: {
+        entry_code: entryCode,
+        privacy: 'PRIVATE',
+      },
+      include: {
+        Users_In_Group: true,
+      },
+    });
+
+    return group;
+  }
+
+  async enterInPrivateGroup(
+    entryCode: string,
+    userId: number,
+  ): Promise<Group> {
+    const group = await this.groupRepository.$transaction(async (tx) => {
+      const group = await tx.group.update({
+        where: {
+          entry_code: entryCode,
+        },
+        data: {
+          user_count: {
+            increment: 1,
+          },
+        },
+      });
+
+      await tx.users_In_Group.create({
+        data: {
+          group_id: group.id,
+          user_id: userId,
+        },
+      });
+
+      return group;
+    });
+
+    return group;
   }
 }
 

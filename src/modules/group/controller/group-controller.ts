@@ -67,6 +67,63 @@ class GroupController {
       next(error);
     }
   }
+
+  async getPublicGroupsWithVacancies(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      const groups = await this.groupService.getPublicGroupsWithVacancies();
+
+      res.status(200).json({ groups });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getPrivateGroupForEntryCode(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    const paramsSchema = z.object({
+      entryCode: z.string(),
+    });
+
+    try {
+      const { entryCode } = paramsSchema.parse(req.params);
+
+      const group =
+        await this.groupService.getPrivateGroupForEntryCode(entryCode);
+
+      res.status(200).json({ group });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async enterInPrivateGroup(req: Request, res: Response, next: NextFunction) {
+    const paramsSchema = z.object({
+      entryCode: z.string(),
+      userId: z.string(),
+    });
+
+    try {
+      const { entryCode, userId } = paramsSchema.parse(req.params);
+
+      const userIdNumber = Number(userId);
+
+      const group = await this.groupService.enterInPrivateGroup(
+        entryCode,
+        userIdNumber,
+      );
+
+      res.status(200).json({ message: 'Entered in private group', group });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 const groupController = new GroupController(groupService);
 

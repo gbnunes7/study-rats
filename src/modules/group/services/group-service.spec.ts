@@ -229,7 +229,7 @@ describe('GroupService', () => {
     }
   });
 
-  it('should an code if the group is private', async () => {
+  it('should generate a code if the group is private', async () => {
     const result = await sut.createGroup({
       name: 'Study Group',
       subject: 'ALGORITHMS',
@@ -241,6 +241,76 @@ describe('GroupService', () => {
     expect(result.isRight()).toBeTruthy();
     if (result.isRight()) {
       expect(result.value.entry_code).toBeDefined();
+    }
+  });
+
+  it('should not generate a code if the group is public', async () => {
+    const result = await sut.createGroup({
+      name: 'Study Group',
+      subject: 'ALGORITHMS',
+      description: 'Group for math lovers',
+      privacy: 'PUBLIC',
+      userId: 1,
+    });
+
+    expect(result.isRight()).toBeTruthy();
+    if (result.isRight()) {
+      expect(result.value.entry_code).toBeUndefined();
+    }
+  });
+
+  it('should return a group by entry code', async () => {
+    const result = await sut.createGroup({
+      name: 'Study Group',
+      subject: 'ALGORITHMS',
+      description: 'Group for math lovers',
+      privacy: 'PRIVATE',
+      userId: 1,
+    });
+
+    if (result.isRight()) {
+      const createdGroup = result.value;
+
+      const groupFound = await sut.getPrivateGroupForEntryCode(
+        createdGroup.entry_code as string,
+      );
+
+      expect(groupFound.isRight()).toBeTruthy();
+      if (groupFound.isRight()) {
+        expect(groupFound.value.id).toBe(createdGroup.id);
+        expect(groupFound.value.entry_code).toBe(createdGroup.entry_code);
+      }
+    }
+  });
+  it('should not return a group if the entry code is invalid', async () => {
+    const result = await sut.getPrivateGroupForEntryCode('INVALID_CODE');
+
+    expect(result.isLeft()).toBeTruthy();
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(GroupNotFoundError);
+    }
+  });
+
+  it('should not return a group if the group is public', async () => {
+    const result = await sut.createGroup({
+      name: 'Study Group',
+      subject: 'ALGORITHMS',
+      description: 'Group for math lovers',
+      privacy: 'PUBLIC',
+      userId: 1,
+    });
+
+    if (result.isRight()) {
+      const createdGroup = result.value;
+
+      const groupFound = await sut.getPrivateGroupForEntryCode(
+        createdGroup.entry_code as string,
+      );
+
+      expect(groupFound.isLeft()).toBeTruthy();
+      if (groupFound.isLeft()) {
+        expect(groupFound.value).toBeInstanceOf(GroupNotFoundError);
+      }
     }
   });
 });

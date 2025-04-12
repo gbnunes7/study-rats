@@ -1,6 +1,7 @@
 import type { Group } from '@prisma/client';
 import type { IGroupContract } from '../contract/group-contract';
 import type { CreateGroupDto } from '../dto/group-dto';
+import type { GroupPayload } from '../types/group-payload';
 import { left, right, type Either } from '../../../@types/either';
 import { InvalidPrivacyTypeError } from './errors/invalid-privacy-type-error';
 import { UserHasReachedTheLimitError } from './errors/user-has-reached-the-limit-error';
@@ -79,5 +80,49 @@ export class GroupService {
     const groups = await this.groupRepository.getPublicGroupsWithVacancies();
 
     return right(groups.length > 0 ? groups : []);
+  }
+
+  async getPrivateGroupForEntryCode(
+    entryCode: string,
+  ): Promise<Either<GroupNotFoundError, GroupPayload>> {
+    const groupFound =
+      await this.groupRepository.getPrivateGroupForEntryCode(entryCode);
+
+    if (!groupFound) {
+      return left(new GroupNotFoundError());
+    }
+
+    if (groupFound.privacy !== 'PRIVATE') {
+      return left(new GroupNotFoundError());
+    }
+
+    return right(groupFound);
+  }
+
+  async enterInPrivateGroup(
+    entryCode: string,
+    userId: number,
+  ): Promise<Either<GroupNotFoundError | UserAlreadyInGroupError, Group>> {
+    const groupFound =
+      await this.groupRepository.getPrivateGroupForEntryCode(entryCode);
+
+    if (!groupFound) {
+      return left(new GroupNotFoundError());
+    }
+
+    if (groupFound.Users_In_Group.some((user) => user.user_id === userId)) {
+      return left(new UserAlreadyInGroupError());
+    }
+
+    if (groupFound.entry_code !== entryCode) {
+      return left(new Error('Invalid entry code'));
+    }
+
+    const group = await this.groupRepository.enterInPrivateGroup(
+      entryCode,
+      userId,
+    );
+
+    return right(group);
   }
 }
