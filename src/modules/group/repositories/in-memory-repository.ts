@@ -105,11 +105,60 @@ export class InMemoryGroupRepository implements IGroupContract {
     return groupsWithVacancies;
   }
 
-  async getPrivateGroupForEntryCode(entryCode: string): Promise<Group | null> {
+  async getPrivateGroupForEntryCode(entryCode: string): Promise<
+    | (Group & {
+        Users_In_Group: {
+          id: number;
+          created_at: Date;
+          updated_at: Date;
+          user_id: number;
+          group_id: number;
+        }[];
+      })
+    | null
+  > {
     const group = this.groups.find(
       (group) => group.entry_code === entryCode && group.privacy === 'PRIVATE',
     );
 
-    return group || null;
+    if (!group) {
+      return null;
+    }
+
+    const usersInGroup = this.usersInGroup.filter(
+      (entry) => entry.group_id === group.id,
+    );
+
+    return {
+      ...group,
+      Users_In_Group: usersInGroup,
+    };
+  }
+
+  async enterInPrivateGroup(entryCode: string, userId: number): Promise<Group> {
+    const group = this.groups.find(
+      (group) => group.entry_code === entryCode && group.privacy === 'PRIVATE',
+    );
+
+    if (!group) {
+      throw new Error('Private group not found or invalid entry code');
+    }
+
+    if ((group.user_count || 0) >= (group.user_limit || 10)) {
+      throw new Error('Group has reached its user limit');
+    }
+
+    group.user_count = (group.user_count || 0) + 1;
+    group.updated_at = new Date();
+
+    this.usersInGroup.push({
+      id: this.usersInGroupCounter++,
+      created_at: new Date(),
+      updated_at: new Date(),
+      user_id: userId,
+      group_id: group.id,
+    });
+
+    return group;
   }
 }
