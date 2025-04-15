@@ -313,4 +313,67 @@ describe('GroupService', () => {
       }
     }
   });
+
+  it('should return a group by entry code', async () => {
+    const result = await sut.createGroup({
+      name: 'Study Group',
+      subject: 'ALGORITHMS',
+      description: 'Group for math lovers',
+      privacy: 'PRIVATE',
+      userId: 1,
+    });
+
+    if (result.isRight()) {
+      const createdGroup = result.value;
+
+      const groupFound = await sut.getPrivateGroupForEntryCode(
+        createdGroup.entry_code as string,
+      );
+
+      expect(groupFound.isRight()).toBeTruthy();
+      if (groupFound.isRight()) {
+        expect(groupFound.value.id).toBe(createdGroup.id);
+        expect(groupFound.value.entry_code).toBe(createdGroup.entry_code);
+      }
+    }
+  });
+
+  it('should not return a group if the entry code is invalid', async () => {
+    const result = await sut.getPrivateGroupForEntryCode('INVALID_CODE');
+
+    expect(result.isLeft()).toBeTruthy();
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(GroupNotFoundError);
+    }
+  });
+
+  it('should user enter in a group with entry code', async () => {
+    const group = await groupRepository.createGroup({
+      name: 'Study Group',
+      subject: 'ALGORITHMS',
+      description: 'Group for math lovers',
+      privacy: 'PRIVATE',
+      userId: 1,
+    });
+    const result = await sut.enterInPrivateGroup(group.entry_code!, 2);
+
+    expect(result.isRight()).toBeTruthy();
+    if (result.isRight()) {
+      expect(result.value.id).toBe(group.id);
+    }
+    const groupFound = await groupRepository.getGroupById(group.id);
+    expect(groupFound).toBeDefined();
+    if (groupFound) {
+      expect(groupFound.user_count).toBe(1);
+    }
+  });
+
+  it('should not allow user to enter a group with invalid entry code', async () => {
+    const result = await sut.enterInPrivateGroup('INVALID_CODE', 1);
+
+    expect(result.isLeft()).toBeTruthy();
+    if (result.isLeft()) {
+      expect(result.value).toBeInstanceOf(GroupNotFoundError);
+    }
+  });
 });
