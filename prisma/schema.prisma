@@ -48,6 +48,7 @@ model User {
 
   Group          Group[]
   Users_In_Group Users_In_Group[]
+  Checkin        Checkin[]
 
   @@map("users")
 }
@@ -69,6 +70,7 @@ model Group {
   user_id        Int
   user           User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
   Users_In_Group Users_In_Group[]
+  Checkin        Checkin[]
 
   @@map("groups")
 }
@@ -85,4 +87,23 @@ model Users_In_Group {
   group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
 
   @@map("users_in_group")
+}
+
+model Checkin {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String?
+  study_time  Int
+  commits     Int
+  image_url   String?
+
+  user_id  Int
+  group_id Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@map("checkins")
 }
