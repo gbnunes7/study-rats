@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Subject {
+  JAVASCRIPT
+  PYTHON
+  JAVA
+  C_SHARP
+  RUBY
+  PHP
+  GO
+  HTML
+  CSS
+  PROGRAMMING_LOGIC
+  DATA_STRUCTURES
+  ALGORITHMS
+}
+
+enum Privacy {
+  PUBLIC
+  PRIVATE
+}
+
+model User {
+  id                     Int       @id @default(autoincrement())
+  name                   String
+  email                  String    @unique
+  subject_interests      Subject[]
+  description            String?
+  password_hash          String
+  reset_password_token   String?   @unique
+  reset_password_expires DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  Group          Group[]
+  Users_In_Group Users_In_Group[]
+  Checkin        Checkin[]
+  Message        Message[]
+
+  @@map("users")
+}
+
+model Group {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  subject     Subject
+  entry_code  String? @unique
+
+  user_limit Int     @default(5)
+  user_count Int     @default(0)
+  privacy    Privacy @default(PUBLIC)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user_id        Int
+  user           User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  Users_In_Group Users_In_Group[]
+  Checkin        Checkin[]
+  Message        Message[]
+
+  @@map("groups")
+}
+
+model Users_In_Group {
+  id       Int @id @default(autoincrement())
+  user_id  Int
+  group_id Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@map("users_in_group")
+}
+
+model Checkin {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String?
+  study_time  Int
+  commits     Int
+  image_url   String?
+
+  user_id  Int
+  group_id Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@map("checkins")
+}
+
+model Message {
+  id      Int    @id @default(autoincrement())
+  content String
+
+  user_id  Int
+  group_id Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}

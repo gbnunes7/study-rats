@@ -1,0 +1,132 @@
+import type { Group, Prisma, PrismaClient } from '@prisma/client';
+import type { IGroupContract } from '../contract/group-contract';
+import type { CreateGroupDto } from '../dto/group-dto';
+import type { GroupPayload } from '../types/group-payload';
+
+class GroupRepository implements IGroupContract {
+  constructor(private groupRepository: PrismaClient) {}
+
+  async createGroup({
+    name,
+    subject,
+    description,
+    privacy,
+    userId,
+    entryCode,
+  }: CreateGroupDto): Promise<Group> {
+    const group = await this.groupRepository.group.create({
+      data: {
+        name,
+        subject,
+        description,
+        privacy,
+        user_id: userId,
+        entry_code: entryCode,
+      },
+    });
+
+    return group;
+  }
+
+  async getGroupsCreatedByUserId(userId: number): Promise<Group[] | null> {
+    const groups = await this.groupRepository.group.findMany({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    return groups.length > 0 ? groups : [];
+  }
+
+  async getGroupById(groupId: number): Promise<GroupPayload | null> {
+    const group = await this.groupRepository.group.findUnique({
+      where: {
+        id: groupId,
+      },
+      include: {
+        Users_In_Group: true,
+      },
+    });
+
+    return group;
+  }
+
+  async enterInGroup(groupId: number, userId: number): Promise<Group> {
+    return this.groupRepository.$transaction(async (tx) => {
+      const group = await tx.group.update({
+        where: { id: groupId },
+        data: {
+          user_count: {
+            increment: 1,
+          },
+        },
+      });
+
+      await tx.users_In_Group.create({
+        data: {
+          group_id: groupId,
+          user_id: userId,
+        },
+      });
+
+      return group;
+    });
+  }
+
+  async getPublicGroupsWithVacancies(): Promise<Group[]> {
+    const groups = await this.groupRepository.$queryRaw<Group[]>`
+    SELECT * FROM "Group"
+    WHERE privacy = 'PUBLIC'
+    AND user_count < user_limit
+  `;
+
+    return groups.length > 0 ? groups : [];
+  }
+
+  async getPrivateGroupForEntryCode(
+    entryCode: string,
+  ): Promise<GroupPayload | null> {
+    const group = await this.groupRepository.group.findFirst({
+      where: {
+        entry_code: entryCode,
+        privacy: 'PRIVATE',
+      },
+      include: {
+        Users_In_Group: true,
+      },
+    });
+
+    return group;
+  }
+
+  async enterInPrivateGroup(
+    entryCode: string,
+    userId: number,
+  ): Promise<Group> {
+    const group = await this.groupRepository.$transaction(async (tx) => {
+      const group = await tx.group.update({
+        where: {
+          entry_code: entryCode,
+        },
+        data: {
+          user_count: {
+            increment: 1,
+          },
+        },
+      });
+
+      await tx.users_In_Group.create({
+        data: {
+          group_id: group.id,
+          user_id: userId,
+        },
+      });
+
+      return group;
+    });
+
+    return group;
+  }
+}
+
+export { GroupRepository };
