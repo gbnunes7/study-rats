@@ -7,7 +7,7 @@ import ErrorMessage from "../ErrorMessage";
 
 export const loginSchema = z.object({
 	email: z.string().email("Invalid email address").min(1, "Email is required"),
-	password: z.string().min(8, "Password must be at least 8 characters long"),
+	password: z.string().min(8, "Need at least 8 characters"),
 });
 
 export type LoginForm = z.infer<typeof loginSchema>;
@@ -25,7 +25,7 @@ const FormLogin = () => {
 
 	return (
 		<form>
-			<div className="flex flex-col gap-2">
+			<div className="flex flex-col gap-2 w-full">
 				<label htmlFor="email" className="text-sm text-white font-medium">
 					Email
 				</label>
@@ -35,7 +35,7 @@ const FormLogin = () => {
 					{...register("email")}
 					className={`border ${
 						errors.email ? "border-red-500" : "border-gray-300"
-					} rounded-md p-2 focus:outline-none focus:border-[#3e1496]`}
+					} rounded-md p-2 text-white focus:outline-none focus:border-[#3e1496]`}
 				/>
 				{errors.email && (
 					<ErrorMessage>
@@ -52,7 +52,7 @@ const FormLogin = () => {
 					{...register("password")}
 					className={`border ${
 						errors.password ? "border-red-500" : "border-gray-300"
-					} rounded-md p-2 focus:outline-none focus:border-[#3e1496]`}
+					} rounded-md p-2 text-white focus:outline-none focus:border-[#3e1496]`}
 				/>
 				{errors.password && (
 					<ErrorMessage>{errors.password.message}</ErrorMessage>
