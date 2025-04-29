@@ -32,9 +32,6 @@ const Group = () => {
 	];
 	return (
 		<ContainerMain>
-			<div className="absolute top-4 left-4">
-				<MenuHamburger />
-			</div>
 			<div className="flex flex-col items-center justify-center h-full">
 				<Image src="/images/logo.png" alt="logo" width={700} height={200} />
 
