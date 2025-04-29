@@ -89,14 +89,10 @@ const GroupSelected = () => {
 
 	const myCheckInsLength = 2;
 
-	const daysLeft = 9
+	const daysLeft = 9;
 
 	return (
 		<ContainerMain>
-			<div className="flex flex-col items-start mb-4 w-full">
-				<MenuHamburger />
-			</div>
-
 			<h1 className="text-2xl font-bold mb-4 text-white pl-2 ">
 				{group?.name}
 			</h1>
