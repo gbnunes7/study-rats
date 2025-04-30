@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const GroupSelected = () => {
 	const { id } = useParams();
@@ -84,6 +85,8 @@ const GroupSelected = () => {
 
 	const checkInLeaderLength = 9;
 
+	const router = useRouter();
+
 	const name = "John Doe";
 	const avatar = "images/logo.png";
 
@@ -147,7 +150,11 @@ const GroupSelected = () => {
 					<p className="text-gray-500">No check-ins available.</p>
 				</div>
 			)}
-			<FloatingButton onClick={() => console.log("oiu")} />
+			<FloatingButton
+				onClick={() => {
+					router.push("/create-group");
+				}}
+			/>
 		</ContainerMain>
 	);
 };
